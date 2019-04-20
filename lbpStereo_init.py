@@ -3,6 +3,8 @@ import scipy.ndimage
 import imageio
 import matplotlib.pyplot as plt
 
+lbd = 1
+
 def compute_data_cost(I1, I2, num_disp_values, Tau):
     """data_cost: a 3D array of sixe height x width x num_disp_value;
     data_cost(y,x,l) is the cost of assigning the label l to pixel (y,x).
@@ -23,6 +25,9 @@ def compute_energy(dataCost,disparity,Lambda):
     Return total energy, a scalar value"""
     return 0
 
+# def n(p, q, dataCost):
+    
+
 def update_msg(msgUPrev,msgDPrev,msgLPrev,msgRPrev,dataCost,Lambda):
     """Update message maps.
     dataCost: 3D array, depth=label number.
@@ -33,9 +38,36 @@ def update_msg(msgUPrev,msgDPrev,msgLPrev,msgRPrev,dataCost,Lambda):
     msgD=np.zeros(dataCost.shape)
     msgL=np.zeros(dataCost.shape)
     msgR=np.zeros(dataCost.shape)
-    for l in range(dataCost[0, 0]):
-        sum_msgU = np.roll(msgU, -1, axis=1)
-        msgU[:,:,l] = np.minimum(dataCost[:,:,l] + sum_msgU)
+    # spqU = np.zeros(dataCost.shape)
+    # spqL = np.zeros(dataCost.shape)
+    # spqD = np.zeros(dataCost.shape)
+    # spqR = np.zeros(dataCost.shape)
+    spqU = np.ones((len(dataCost), len(dataCost[0])))
+    spqL = np.ones((len(dataCost), len(dataCost[0])))
+    spqD = np.ones((len(dataCost), len(dataCost[0])))
+    spqR = np.ones((len(dataCost), len(dataCost[0])))
+    npqU = np.ones(dataCost.shape)
+    npqL = np.ones(dataCost.shape)
+    npqD = np.ones(dataCost.shape)
+    npqR = np.ones(dataCost.shape)
+    sum_msgU = np.roll(msgRPrev, -1, axis=0) + np.roll(msgLPrev, 1, axis=0) + np.roll(msgUPrev, 1, axis=1)
+    sum_msgR = np.roll(msgRPrev, -1, axis=0) + np.roll(msgRPrev, 1, axis=0) + np.roll(msgUPrev, 1, axis=1)
+    sum_msgL = np.roll(msgLPrev, 1, axis=0) + np.roll(msgDPrev, -1, axis=1) + np.roll(msgUPrev, 1, axis=1)
+    sum_msgD = np.roll(msgRPrev, -1, axis=0) + np.roll(msgLPrev, 1, axis=0) + np.roll(msgDPrev, -1, axis=1)
+    npqU = dataCost + sum_msgU
+    npqL = dataCost + sum_msgL
+    npqR = dataCost + sum_msgR
+    npqD = dataCost + sum_msgD
+    for l in range(len(dataCost[0, 0])):
+        spqU[:,:] = np.minimum(spqU[:,:], npqU[:,:,l])
+        spqL[:,:] = np.minimum(spqL[:,:], npqL[:,:,l])
+        spqD[:,:] = np.minimum(spqD[:,:], npqD[:,:,l])
+        spqR[:,:] = np.minimum(spqR[:,:], npqR[:,:,l])
+    for l in range(len(dataCost[0, 0])):
+        msgU[:,:,l] = np.minimum(dataCost[:,:,l] + sum_msgU[:,:,l], Lambda + spqU[:,:])
+        msgL[:,:,l] = np.minimum(dataCost[:,:,l] + sum_msgL[:,:,l], Lambda + spqL[:,:])
+        msgD[:,:,l] = np.minimum(dataCost[:,:,l] + sum_msgD[:,:,l], Lambda + spqD[:,:])
+        msgR[:,:,l] = np.minimum(dataCost[:,:,l] + sum_msgR[:,:,l], Lambda + spqR[:,:])
     
     return msgU,msgD,msgL,msgR
 
@@ -54,6 +86,7 @@ def normalize_msg(msgU,msgD,msgL,msgR):
 def compute_belief(dataCost,msgU,msgD,msgL,msgR):
     """Compute beliefs, sum of data cost and messages from all neighbors"""
     beliefs=dataCost.copy()
+    beliefs += np.roll(msgR, -1, axis=0) + np.roll(msgL, 1, axis=0) + np.roll(msgU, 1, axis=1) + np.roll(msgD, -1, axis=1)
     return beliefs
 
 def MAP_labeling(beliefs):
