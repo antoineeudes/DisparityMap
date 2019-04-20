@@ -38,14 +38,10 @@ def update_msg(msgUPrev,msgDPrev,msgLPrev,msgRPrev,dataCost,Lambda):
     msgD=np.zeros(dataCost.shape)
     msgL=np.zeros(dataCost.shape)
     msgR=np.zeros(dataCost.shape)
-    # spqU = np.zeros(dataCost.shape)
-    # spqL = np.zeros(dataCost.shape)
-    # spqD = np.zeros(dataCost.shape)
-    # spqR = np.zeros(dataCost.shape)
-    spqU = np.ones((len(dataCost), len(dataCost[0])))
-    spqL = np.ones((len(dataCost), len(dataCost[0])))
-    spqD = np.ones((len(dataCost), len(dataCost[0])))
-    spqR = np.ones((len(dataCost), len(dataCost[0])))
+    spqU = np.ones((dataCost.shape[0], dataCost.shape[1]))
+    spqL = np.ones((dataCost.shape[0], dataCost.shape[1]))
+    spqD = np.ones((dataCost.shape[0], dataCost.shape[1]))
+    spqR = np.ones((dataCost.shape[0], dataCost.shape[1]))
     npqU = np.ones(dataCost.shape)
     npqL = np.ones(dataCost.shape)
     npqD = np.ones(dataCost.shape)
@@ -58,12 +54,12 @@ def update_msg(msgUPrev,msgDPrev,msgLPrev,msgRPrev,dataCost,Lambda):
     npqL = dataCost + sum_msgL
     npqR = dataCost + sum_msgR
     npqD = dataCost + sum_msgD
-    for l in range(len(dataCost[0, 0])):
+    for l in range(dataCost.shape[2]):
         spqU[:,:] = np.minimum(spqU[:,:], npqU[:,:,l])
         spqL[:,:] = np.minimum(spqL[:,:], npqL[:,:,l])
         spqD[:,:] = np.minimum(spqD[:,:], npqD[:,:,l])
         spqR[:,:] = np.minimum(spqR[:,:], npqR[:,:,l])
-    for l in range(len(dataCost[0, 0])):
+    for l in range(dataCost.shape[2]):
         msgU[:,:,l] = np.minimum(dataCost[:,:,l] + sum_msgU[:,:,l], Lambda + spqU[:,:])
         msgL[:,:,l] = np.minimum(dataCost[:,:,l] + sum_msgL[:,:,l], Lambda + spqL[:,:])
         msgD[:,:,l] = np.minimum(dataCost[:,:,l] + sum_msgD[:,:,l], Lambda + spqD[:,:])
@@ -92,6 +88,7 @@ def compute_belief(dataCost,msgU,msgD,msgL,msgR):
 def MAP_labeling(beliefs):
     """Return a 2D array assigning to each pixel its best label from beliefs
     computed so far"""
+
     return np.zeros((beliefs.shape[0],beliefs.shape[1]))
 
 def stereo_bp(I1,I2,num_disp_values,Lambda,Tau=15,num_iterations=60):
