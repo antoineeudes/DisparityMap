@@ -3,7 +3,6 @@ import scipy.ndimage
 import imageio
 import matplotlib.pyplot as plt
 
-lbd = 1
 
 def compute_data_cost(I1, I2, num_disp_values, Tau):
     """data_cost: a 3D array of sixe height x width x num_disp_value;
@@ -23,10 +22,10 @@ def compute_energy(dataCost,disparity,Lambda):
     (an integer between 0 and num_disp_values-1)
     Lambda: a scalar value.
     Return total energy, a scalar value"""
-    return 0
-
-# def n(p, q, dataCost):
-    
+    hh, ww = np.meshgrid(range(dataCost.shape[0]), range(dataCost.shape[1]), indexing='ij')
+    dplp = dataCost[hh, ww, disparity]
+    # return np.sum(dplp) + Lambda * np.sum(np.roll(disparity, 1, axis=0) + np.roll(disparity, 1, axis=1) + np.roll(disparity, -1, axis=0) + np.roll(disparity, -1, axis=1) - 4*disparity)
+    return np.sum(dplp) + Lambda * np.sum([disparity!=np.roll(disparity, 1, axis=0)] + [disparity!=np.roll(disparity, 1, axis=1)] + [disparity!=np.roll(disparity, -1, axis=0)] + [disparity!=np.roll(disparity, -1, axis=1)])
 
 def update_msg(msgUPrev,msgDPrev,msgLPrev,msgRPrev,dataCost,Lambda):
     """Update message maps.
@@ -88,8 +87,7 @@ def compute_belief(dataCost,msgU,msgD,msgL,msgR):
 def MAP_labeling(beliefs):
     """Return a 2D array assigning to each pixel its best label from beliefs
     computed so far"""
-
-    return np.zeros((beliefs.shape[0],beliefs.shape[1]))
+    return np.argmin(beliefs, axis=2)
 
 def stereo_bp(I1,I2,num_disp_values,Lambda,Tau=15,num_iterations=60):
     """The main function"""
