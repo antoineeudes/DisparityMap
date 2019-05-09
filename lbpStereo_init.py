@@ -24,7 +24,6 @@ def compute_energy(dataCost,disparity,Lambda):
     Return total energy, a scalar value"""
     hh, ww = np.meshgrid(range(dataCost.shape[0]), range(dataCost.shape[1]), indexing='ij')
     dplp = dataCost[hh, ww, disparity]
-    # return np.sum(dplp) + Lambda * np.sum(np.roll(disparity, 1, axis=0) + np.roll(disparity, 1, axis=1) + np.roll(disparity, -1, axis=0) + np.roll(disparity, -1, axis=1) - 4*disparity)
     return np.sum(dplp) + Lambda * np.sum([disparity!=np.roll(disparity, 1, axis=0)] + [disparity!=np.roll(disparity, 1, axis=1)] + [disparity!=np.roll(disparity, -1, axis=0)] + [disparity!=np.roll(disparity, -1, axis=1)])
 
 def update_msg(msgUPrev,msgDPrev,msgLPrev,msgRPrev,dataCost,Lambda):
@@ -113,8 +112,8 @@ def stereo_bp(I1,I2,num_disp_values,Lambda,Tau=15,num_iterations=60):
 img_left =imageio.imread('imL.png')
 img_right=imageio.imread('imR.png')
 
+print("Computing dataCost...")
 dataCost = compute_data_cost(img_left, img_right, 5, 0.1)
-print(dataCost)
 plt.subplot(121)
 plt.imshow(img_left)
 plt.subplot(122)
@@ -127,12 +126,12 @@ img_right=img_right.astype(float)
 
 # Parameters
 num_disp_values=16 # these images have disparity between 0 and 15. 
-Lambda=10.0
+Lambda=1.0
 
 # Gaussian filtering
 I1=scipy.ndimage.filters.gaussian_filter(img_left, 0.6)
 I2=scipy.ndimage.filters.gaussian_filter(img_right,0.6)
-
+print("Computing disparity and energy...")
 disparity,energy = stereo_bp(I1,I2,num_disp_values,Lambda)
 imageio.imwrite('disparity_{:g}.png'.format(Lambda),disparity)
 
